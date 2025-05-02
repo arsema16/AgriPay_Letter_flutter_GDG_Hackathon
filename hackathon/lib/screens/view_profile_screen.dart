@@ -20,105 +20,118 @@ class ViewProfileScreen extends StatelessWidget {
     String firstLetter = farmer.name.isNotEmpty ? farmer.name[0].toUpperCase() : '';
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
 
-            // Top icon bar for navigation
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.home, color: Colors.black87),
-                  tooltip: 'Home',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/farmer');
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                  tooltip: 'Calendar',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/calendar');
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.notifications, color: Colors.red),
-                  tooltip: 'Notifications',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/notifications');
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.person, color: Colors.green),
-                  tooltip: 'Profile',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/view-profile');
-                  },
-                ),
-              ],
-            ),
+              // Top icon bar for navigation
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.home, color: Colors.black87),
+                    tooltip: 'Home',
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/dashboard');
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
+                    tooltip: 'Calendar',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/calendar');
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.notifications, color: Colors.red),
+                    tooltip: 'Notifications',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/notifications');
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.person, color: Colors.green),
+                    tooltip: 'Profile',
+                    onPressed: () {
+                      // Do nothing, already on profile
+                    },
+                  ),
+                ],
+              ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Profile Avatar and Info
-            Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.green,
-                child: Text(
-                  firstLetter,
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              // Profile Avatar and Info
+              Center(
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.green,
+                  child: Text(
+                    firstLetter,
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              farmer.name,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              farmer.phone,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 24),
-
-            // Menu Options
-            _buildMenuTile(Icons.person, "Profile", () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            }),
-            _buildMenuTile(Icons.settings, "Setting", () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            }),
-            _buildMenuTile(Icons.mail, "Contact", () {}),
-            _buildMenuTile(Icons.share, "Share App", () {}),
-            _buildMenuTile(Icons.help, "Help", () {}),
-            const Spacer(),
-
-            // Sign out button
-            TextButton(
-              onPressed: () {
-                // Add your sign-out logic here
-              },
-              child: const Text(
-                "Sign Out",
-                style: TextStyle(color: Colors.deepOrange, fontSize: 16),
+              const SizedBox(height: 12),
+              Text(
+                farmer.name,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
+              Text(
+                farmer.phone,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+
+              // Menu Options
+              _buildMenuTile(Icons.person, "Profile", () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
+              }),
+              _buildMenuTile(Icons.settings, "Setting", () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              }),
+              _buildMenuTile(Icons.mail, "Contact", () {}),
+              _buildMenuTile(Icons.share, "Share App", () {}),
+              _buildMenuTile(Icons.help, "Help", () {}),
+
+              const SizedBox(height: 24),
+
+              // Sign out button
+              TextButton(
+                onPressed: () {
+                  // TODO: Add your sign-out logic here
+                },
+                child: const Text(
+                  "Sign Out",
+                  style: TextStyle(color: Colors.deepOrange, fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -130,7 +143,7 @@ class ViewProfileScreen extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
         ],
         onTap: (index) {
-          // Handle tab switching if needed
+          // TODO: Add tab switching logic if needed
         },
       ),
     );

@@ -78,6 +78,7 @@ flutter:
   assets:
     - assets/images/loan_image.png
     - assets/images/logo.png
+    - assets/images/registration_bg.png
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
