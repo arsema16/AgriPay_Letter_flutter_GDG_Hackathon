@@ -10,6 +10,7 @@ import '../screens/prediction_screen.dart' as prediction;
 import '/screens/harvest_log_screen.dart' as harvest;
 import '/screens/repayment_dashboard_screen.dart' as repayment;
 import '/screens/view_profile_screen.dart';
+import '/screens/registration_screen.dart';
 // Providers
 import 'providers/farmer_provider.dart';
 import 'providers/loan_provider.dart';
@@ -27,8 +28,9 @@ class AgriPayLaterApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FarmerProvider()),
         ChangeNotifierProxyProvider<FarmerProvider, LoanProvider>(
           create: (_) => LoanProvider(),
-          update: (_, farmerProv, loanProv) =>
-              loanProv!..updateFarmer(farmerProv.farmer!),
+          update:
+              (_, farmerProv, loanProv) =>
+                  loanProv!..updateFarmer(farmerProv.farmer!),
         ),
         ChangeNotifierProvider(create: (_) => HarvestProvider()),
       ],
@@ -45,7 +47,7 @@ class AgriPayLaterApp extends StatelessWidget {
           '/loan': (context) => loan.LoanStatusScreen(),
           '/harvest-log': (context) => harvest.HarvestStatusScreen(),
           '/repayment': (context) => repayment.RepaymentInfoScreen(),
-          //'/register': (context) => RegistrationScreen(),
+          '/register': (context) => RegistrationScreen(),
           '/prediction': (context) => prediction.PredictionScreen(),
           '/view-profile': (context) => const ViewProfileScreen(),
         },
