@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../models/farmer.dart';
 
 class FarmerProvider with ChangeNotifier {
@@ -9,41 +11,57 @@ class FarmerProvider with ChangeNotifier {
   Farmer? get farmer => _farmer;
 
   Future<void> register({
-  required String name,
-  required String idNumber,
-  required String phone,
-  required String password,
-  required String role,
-  required String email,
-  double? landSize,
-  String? cropType,
-  String? idPhotoPath, // <-- make optional
-}) async {
-  // Proceed without using idPhotoPath
-
-
+    required String name,
+    required String idNumber,
+    required String phone,
+    required String password,
+    required String role,
+    required String email,
+    double? landSize,
+    String? cropType,
+  }) async {
     isLoading = true;
     notifyListeners();
 
     try {
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      final url = Uri.parse(
+          'https://agripay-later-backend-gdg-hackathon.onrender.com/api/register');
 
-      _farmer = Farmer(
-        id: "generated_id_123",
-        name: name,
-        idNumber: idNumber,
-        phone: phone,
-        email: email,
-        role: role,
-        landSize: landSize,
-        cropType: cropType,
-        soilSelfieUrl: idPhotoPath, // ✅ Add this line
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'idNumber': idNumber,
+          'phone': phone,
+          'password': password,
+          'role': role,
+          'email': email,
+          'landSize': landSize,
+          'cropType': cropType,
+        }),
       );
 
-      error = null;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+
+        _farmer = Farmer(
+          id: data['id'],
+          name: data['name'],
+          idNumber: data['idNumber'],
+          phone: data['phone'],
+          email: data['email'],
+          role: data['role'],
+          landSize: data['landSize']?.toDouble(),
+          cropType: data['cropType'],
+        );
+
+        error = null;
+      } else {
+        error = 'Registration failed: ${response.body}';
+      }
     } catch (e) {
-      error = e.toString();
+      error = 'Error: $e';
     }
 
     isLoading = false;
