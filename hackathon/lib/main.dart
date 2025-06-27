@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:hackatone/screens/notifications_screen.dart';
 import 'package:provider/provider.dart';
 
 // Screens
-import 'package:path_provider_android/messages.g.dart';
 import '../screens/splash_screen.dart';
 import '../screens/farmer_home_screen.dart';
 import '../screens/loan_status_screen.dart' as loan;
+import '../screens/loan_request_screen.dart' as loanrequest;
 import '../screens/prediction_screen.dart' as prediction;
 import '/screens/harvest_log_screen.dart' as harvest;
+import '../screens/yield_history_screen.dart' as yield;
 import '/screens/repayment_dashboard_screen.dart' as repayment;
 import '/screens/view_profile_screen.dart';
-import '/screens/registration_screen.dart';
+import '../screens/registration_screen.dart';
+import '../screens/notifications_screen.dart';
+import '../screens/admin_dashboard_screen.dart';
+
 // Providers
 import 'providers/farmer_provider.dart';
 import 'providers/loan_provider.dart';
@@ -43,13 +48,32 @@ class AgriPayLaterApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           '/': (context) => const SplashScreen(),
+
           '/dashboard': (context) => FarmerHomeScreen(),
-          '/loan': (context) => loan.LoanStatusScreen(),
-          '/harvest-log': (context) => harvest.HarvestStatusScreen(),
-          '/repayment': (context) => repayment.RepaymentInfoScreen(),
+          '/loan':
+              (context) => loan.LoanStatusScreen(
+                approvedLimit: 5000.0,
+                currentLoan: 2000.0,
+                repaymentDue: 1500.0,
+                repaymentDate: '2025-06-15',
+                //loanType: 'Fertilizer or' ' seed',
+              ),
+          '/loan-request':
+              (context) => loanrequest.LoanRequestScreen(
+                itemName: 'Fertilizer',
+                maxLoanAmount: 3000.0,
+              ),
+          '/harvest-log': (context) => harvest.HarvestLogScreen(),
+          '/yield': (context) => yield.YieldHistoryScreen(),
+
+          '/repayment': (context) => repayment.RepaymentDashboardScreen(),
           '/register': (context) => RegistrationScreen(),
           '/prediction': (context) => prediction.PredictionScreen(),
           '/view-profile': (context) => const ViewProfileScreen(),
+         '/notification': (context) => const NotificationsScreen(),
+           '/adminDashboard': (context) => AdminDashboardScreen(), // <-- Add this
+
+
         },
       ),
     );

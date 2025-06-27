@@ -21,11 +21,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _landCtrl = TextEditingController();
   final _cropCtrl = TextEditingController();
   bool _showPassword = false;
-
   String _selectedRole = 'farmer';
 
   final RegExp emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   final RegExp passwordRegex = RegExp(r'^(?=.*[A-Z])(?=.*\d).{6,}$');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<FarmerProvider>(context, listen: false).connect();
+    });
+  }
+
+  @override
+  void dispose() {
+    Provider.of<FarmerProvider>(context, listen: false).disposeConnection();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +47,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -43,9 +55,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               ),
             ),
           ),
-          // Overlay
           Container(color: Colors.black.withOpacity(0.5)),
-
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -173,8 +183,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ],
                         const SizedBox(height: 20),
                         if (fp.error != null)
-                          Text(fp.error!,
-                              style: const TextStyle(color: Colors.red)),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: fp.error!
+                                .split('\n')
+                                .map((e) => Row(
+                                      children: [
+                                        const Text("• ",
+                                            style:
+                                                TextStyle(color: Colors.red)),
+                                        Expanded(
+                                            child: Text(e,
+                                                style: const TextStyle(
+                                                    color: Colors.red))),
+                                      ],
+                                    ))
+                                .toList(),
+                          ),
                         const SizedBox(height: 12),
                         fp.isLoading
                             ? const CircularProgressIndicator()
@@ -187,34 +212,47 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       .millisecondsSinceEpoch
                                       .toString();
 
-                                  await fp.register(
-                                    name: _nameCtrl.text,
-                                    idNumber: generatedId,
-                                    phone: _phoneCtrl.text,
-                                    password: _passwordCtrl.text,
-                                    role: _selectedRole,
-                                    email: _emailCtrl.text,
-                                    landSize: _selectedRole == 'farmer'
-                                        ? double.tryParse(_landCtrl.text)
-                                        : null,
-                                    cropType: _selectedRole == 'farmer'
-                                        ? _cropCtrl.text
-                                        : null,
-                                  );
+                                  try {
+                                    await fp.register(
+                                      name: _nameCtrl.text,
+                                      idNumber: generatedId,
+                                      phone: _phoneCtrl.text,
+                                      password: _passwordCtrl.text,
+                                      role: _selectedRole,
+                                      email: _emailCtrl.text,
+                                      landSize: _selectedRole == 'farmer'
+                                          ? double.tryParse(_landCtrl.text)
+                                          : null,
+                                      cropType: _selectedRole == 'farmer'
+                                          ? _cropCtrl.text
+                                          : null,
+                                    );
 
-                                  if (fp.error == null && context.mounted) {
-                                    if (_selectedRole == 'farmer') {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const farmer.FarmerHomeScreen(),
-                                        ),
-                                      );
-                                    } else if (_selectedRole == 'admin') {
-                                      Navigator.pushReplacementNamed(
-                                          context, '/admin-home');
+                                    if (fp.error == null && context.mounted) {
+                                      if (_selectedRole == 'farmer') {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const farmer
+                                                .FarmerHomeScreen(),
+                                          ),
+                                        );
+                                      } else if (_selectedRole == 'admin') {
+                                        Navigator.pushReplacementNamed(
+                                            context, '/adminDashboard');
+                                      }
                                     }
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'WebSocket Error: $e',
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
                                   }
                                 },
                               ),

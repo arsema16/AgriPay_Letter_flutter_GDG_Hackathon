@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/farmer_provider.dart';
 import '../widgets/custom_button.dart';
 import 'farmer_home_screen.dart';
+import 'admin_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -16,12 +16,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool _showPassword = false;
-  String _selectedRole = 'farmer';  // Default role is 'farmer'
+  String _selectedRole = 'farmer';  // Default role
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final farmerProvider = context.watch<FarmerProvider>();
 
     return Scaffold(
       body: Stack(
@@ -30,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/registration_bg.png'), // Same background
+                image: AssetImage('assets/images/registration_bg.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -103,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
+
                         // Dropdown for selecting role (farmer or admin)
                         DropdownButtonFormField<String>(
                           value: _selectedRole,
@@ -125,7 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        farmerProvider.isLoading
+
+                        authProvider.isAuthenticated
                             ? const CircularProgressIndicator()
                             : CustomButton(
                                 text: 'Login',
@@ -135,18 +136,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final email = _emailCtrl.text.trim();
                                   final password = _passwordCtrl.text.trim();
 
-                                  // Pass the selected role along with email and password
                                   final success = await authProvider.login(
                                       email, password, _selectedRole);
 
                                   if (success && context.mounted) {
-                                    // Navigate to Farmer Home Screen based on the selected role
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const FarmerHomeScreen(),
-                                      ),
-                                    );
+                                    if (_selectedRole == 'admin') {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const AdminDashboardScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const FarmerHomeScreen(),
+                                        ),
+                                      );
+                                    }
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('Invalid credentials')),

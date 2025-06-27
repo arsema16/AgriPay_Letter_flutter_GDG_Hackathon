@@ -1,179 +1,277 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/loan_provider.dart';
-import '../providers/farmer_provider.dart';
-import '../widgets/custom_button.dart';
+import '/screens/loan_status_screen.dart';
+
+enum LoanStatus { requested, approved, rejected, pending }
 
 class LoanRequestScreen extends StatefulWidget {
+  final String itemName;
+  final double maxLoanAmount;
+
+  const LoanRequestScreen({
+    Key? key,
+    required this.itemName,
+    required this.maxLoanAmount,
+  }) : super(key: key);
+
   @override
   _LoanRequestScreenState createState() => _LoanRequestScreenState();
 }
 
 class _LoanRequestScreenState extends State<LoanRequestScreen> {
-  final _amountCtrl = TextEditingController();
-  final _repaymentCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  LoanStatus _status = LoanStatus.pending;
+  final TextEditingController _amountController = TextEditingController();
+  bool _isSubmitting = false;
+
+  String _itemType = 'Fertilizer'; // Default value is 'Fertilizer'
+  String? _selectedType;
+
+  // List of types for fertilizer and seed
+  final Map<String, List<String>> _types = {
+    'Fertilizer': ['Nitrogen', 'Phosphorus', 'Potassium'],
+    'Seed': ['Corn', 'Wheat', 'Rice'],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.text = widget.maxLoanAmount.toStringAsFixed(2);
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  void _submitLoanApplication() async {
+    setState(() {
+      _isSubmitting = true;
+      _status = LoanStatus.requested;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Simulated backend logic – replace this with actual HTTP call
+    final isApproved = DateTime.now().millisecond % 2 == 0;
+    setState(() {
+      _status = isApproved ? LoanStatus.approved : LoanStatus.rejected;
+      _isSubmitting = false;
+    });
+
+    if (_status == LoanStatus.approved) {
+      await Future.delayed(const Duration(seconds: 1));
+      double loanAmount = double.tryParse(_amountController.text) ?? 0;
+      final dueDate = DateTime.now().add(Duration(days: 30));
+      final dueDateFormatted =
+          "${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}";
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoanStatusScreen(
+            approvedLimit: widget.maxLoanAmount,
+            currentLoan: loanAmount,
+            repaymentDue: loanAmount,
+            repaymentDate: dueDateFormatted,
+          ),
+        ),
+      );
+    }
+  }
+
+  Color _getStatusColor() {
+    switch (_status) {
+      case LoanStatus.requested:
+        return Colors.orange;
+      case LoanStatus.approved:
+        return Colors.green;
+      case LoanStatus.rejected:
+        return Colors.red;
+      case LoanStatus.pending:
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText() {
+    switch (_status) {
+      case LoanStatus.requested:
+        return "Requested";
+      case LoanStatus.approved:
+        return "Approved";
+      case LoanStatus.rejected:
+        return "Rejected";
+      case LoanStatus.pending:
+      default:
+        return "Pending";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final loanProvider = context.watch<LoanProvider>();
-    final farmerProvider = context.watch<FarmerProvider>();
-    final farmer = farmerProvider.farmer;
-
-    // Check if farmer data is null and display a message
-    if (farmer == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('Loan Request'),
-          backgroundColor: Colors.green,
-        ),
-        body: Center(child: Text('No farmer data. Please register first.')),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Loan Request'),
-        backgroundColor: Colors.green,
+        title: Text('${_itemType} Loan Application'),
       ),
-      body: farmerProvider.isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Option to choose between Seed or Fertilizer
+            Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: Text('Fertilizer'),
+                    value: 'Fertilizer',
+                    groupValue: _itemType,
+                    onChanged: (value) {
+                      setState(() {
+                        _itemType = value!;
+                        _selectedType = null; // Reset type selection
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: Text('Seed'),
+                    value: 'Seed',
+                    groupValue: _itemType,
+                    onChanged: (value) {
+                      setState(() {
+                        _itemType = value!;
+                        _selectedType = null; // Reset type selection
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            // Dropdown or list to select the type of Fertilizer or Seed
+            if (_itemType != null)
+              Column(
+                children: [
+                  DropdownButton<String>(
+                    hint: Text('Select ${_itemType} Type'),
+                    value: _selectedType,
+                    items: _types[_itemType]!
+                        .map((type) => DropdownMenuItem<String>(
+                              value: type,
+                              child: Text(type),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedType = value!;
+                      });
+                    },
+                  ),
+                  if (_selectedType != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(
+                        'You selected: $_selectedType',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
+            SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Loan Request for ${farmer.name}', // Assuming 'name' exists in the Farmer model
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      'Item: ${widget.itemName}',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 8),
                     Text(
-                      'Loan Amount',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                    _buildTextFormField(
-                      controller: _amountCtrl,
-                      label: 'Enter Amount',
-                      icon: Icons.attach_money,
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter the loan amount';
-                        }
-                        return null;
-                      },
+                      'Maximum Loan Amount: \$${widget.maxLoanAmount.toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: 16),
                     ),
                     SizedBox(height: 16),
-                    Text(
-                      'Repayment Period (in months)',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    TextField(
+                      controller: _amountController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'Loan Amount',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.money),
+                      ),
                     ),
-                    _buildTextFormField(
-                      controller: _repaymentCtrl,
-                      label: 'Enter Months',
-                      icon: Icons.calendar_today,
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter repayment period';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 16),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundImage: AssetImage('assets/images/loan_image.png'),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor().withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: _getStatusColor()),
+                          ),
+                          child: Text(
+                            _getStatusText(),
+                            style: TextStyle(
+                              color: _getStatusColor(),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                        SizedBox(width: 15),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Loan for ${farmer.name}', // Assuming 'name' instead of 'crop'
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Repayment Period: ${_repaymentCtrl.text} months',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ],
+                        ElevatedButton(
+                          onPressed: _isSubmitting || _status == LoanStatus.approved
+                              ? null
+                              : _submitLoanApplication,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: _isSubmitting
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text('Submit Application'),
                         ),
                       ],
-                    ),
-                    SizedBox(height: 24),
-                    CustomButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Validate and parse input before calling updateLoan
-                          final amount = _amountCtrl.text;
-                          final repayment = _repaymentCtrl.text;
-
-                          if (amount.isEmpty || repayment.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Please fill all fields')),
-                            );
-                            return;
-                          }
-
-                          try {
-                            final parsedAmount = double.parse(amount);
-                            final parsedRepayment = int.parse(repayment);
-
-                            // Call the loanProvider.updateLoan method
-                            loanProvider.updateLoan(
-                              parsedAmount,
-                              parsedRepayment,
-                            );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Loan Requested Successfully')),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Invalid input. Please check the values')),
-                            );
-                          }
-                        }
-                      },
-                      text: 'Submit Loan Request',
                     ),
                   ],
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    bool obscureText = false,
-    FormFieldValidator<String>? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.green),
-        labelStyle: TextStyle(color: Colors.green),
-        border: OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.green),
+            SizedBox(height: 20),
+            if (_status == LoanStatus.approved)
+              Card(
+                color: Colors.green.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Your loan has been approved! Funds will be disbursed shortly.',
+                    style: TextStyle(color: Colors.green.shade800),
+                  ),
+                ),
+              ),
+            if (_status == LoanStatus.rejected)
+              Card(
+                color: Colors.red.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Sorry, your loan request was rejected. Try again later.',
+                    style: TextStyle(color: Colors.red.shade800),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

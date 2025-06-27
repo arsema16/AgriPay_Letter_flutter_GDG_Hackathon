@@ -1,16 +1,54 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../models/farmer.dart';
 
 class FarmerProvider with ChangeNotifier {
   bool isLoading = false;
   String? error;
-
   Farmer? _farmer;
   Farmer? get farmer => _farmer;
 
-  Future<void> register({
+  WebSocketChannel? _channel;
+
+  void connect() {
+    _channel = WebSocketChannel.connect(
+      Uri.parse('wss://agripay-later-backend-gdg-hackathon.onrender.com/ws/register'),
+    );
+
+    _channel!.stream.listen(
+      (message) {
+        final responseData = jsonDecode(message);
+
+        if (responseData['status'] == 'success') {
+          final data = responseData['data'];
+          _farmer = Farmer(
+            id: data['id'],
+            name: data['name'],
+            idNumber: data['idNumber'],
+            phone: data['phone'],
+            email: data['email'],
+            role: data['role'],
+            landSize: data['landSize']?.toDouble(),
+            cropType: data['cropType'],
+          );
+          error = null;
+        } else {
+          error = responseData['message'] ?? 'Unknown error occurred';
+        }
+
+        isLoading = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        error = 'WebSocket error: $e';
+        isLoading = false;
+        notifyListeners();
+      },
+    );
+  }
+
+  void register({
     required String name,
     required String idNumber,
     required String phone,
@@ -19,52 +57,34 @@ class FarmerProvider with ChangeNotifier {
     required String email,
     double? landSize,
     String? cropType,
-  }) async {
-    isLoading = true;
-    notifyListeners();
-
-    try {
-      final url = Uri.parse(
-          'https://agripay-later-backend-gdg-hackathon.onrender.com/api/register');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'idNumber': idNumber,
-          'phone': phone,
-          'password': password,
-          'role': role,
-          'email': email,
-          'landSize': landSize,
-          'cropType': cropType,
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-
-        _farmer = Farmer(
-          id: data['id'],
-          name: data['name'],
-          idNumber: data['idNumber'],
-          phone: data['phone'],
-          email: data['email'],
-          role: data['role'],
-          landSize: data['landSize']?.toDouble(),
-          cropType: data['cropType'],
-        );
-
-        error = null;
-      } else {
-        error = 'Registration failed: ${response.body}';
-      }
-    } catch (e) {
-      error = 'Error: $e';
+  }) {
+    if (_channel == null) {
+      connect();
     }
 
-    isLoading = false;
+    isLoading = true;
+    error = null;
     notifyListeners();
+
+    final registerData = {
+      'action': 'register',
+      'payload': {
+        'name': name,
+        'idNumber': idNumber,
+        'phone': phone,
+        'password': password,
+        'role': role,
+        'email': email,
+        if (landSize != null) 'land_size': landSize,
+        if (cropType != null) 'crop_type': cropType,
+      }
+    };
+
+    _channel!.sink.add(jsonEncode(registerData));
+  }
+
+  void disposeConnection() {
+    _channel?.sink.close();
+    _channel = null;
   }
 }

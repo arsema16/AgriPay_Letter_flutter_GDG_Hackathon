@@ -1,0 +1,115 @@
+import 'package:flutter/material.dart';
+import 'farmer_model.dart'; // if you separate model
+
+import 'farmer_details_screen.dart';
+
+class FarmerListScreen extends StatefulWidget {
+  const FarmerListScreen({Key? key}) : super(key: key);
+
+  @override
+  State<FarmerListScreen> createState() => _FarmerListScreenState();
+}
+
+class _FarmerListScreenState extends State<FarmerListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  List<Farmer> allFarmers = [
+    Farmer(name: 'Abebe Kebede', id: 'F001', loanStatus: 'Approved'),
+    Farmer(name: 'Chaltu Wako', id: 'F002', loanStatus: 'Pending'),
+    Farmer(name: 'Dereje Taye', id: 'F003', loanStatus: 'Rejected'),
+    Farmer(name: 'Fatuma Ali', id: 'F004', loanStatus: 'Approved'),
+    Farmer(name: 'Getahun Mekonnen', id: 'F005', loanStatus: 'Pending'),
+  ];
+
+  List<Farmer> displayedFarmers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    displayedFarmers = allFarmers;
+    _searchController.addListener(_filterFarmers);
+  }
+
+  void _filterFarmers() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      displayedFarmers = allFarmers.where((farmer) {
+        return farmer.name.toLowerCase().contains(query) ||
+            farmer.id.toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Approved':
+        return Colors.green;
+      case 'Pending':
+        return Colors.orange;
+      case 'Rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _navigateToDetails(Farmer farmer) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FarmerDetailsScreen(farmer: farmer),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Farmer List'), centerTitle: true),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search by Name or ID',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Name')),
+                    DataColumn(label: Text('ID')),
+                    DataColumn(label: Text('Loan Status')),
+                  ],
+                  rows: displayedFarmers.map((farmer) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(farmer.name)),
+                        DataCell(Text(farmer.id)),
+                        DataCell(Text(farmer.loanStatus)),
+                      ],
+                      onSelectChanged: (_) => _navigateToDetails(farmer),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
-  String _role = ''; // To store the role of the user
-  String get role => _role; // Expose the role to be used in UI
+  String _role = '';
+  String get role => _role;
 
   bool get isAuthenticated => _isAuthenticated;
 
   Future<bool> login(String email, String password, String role) async {
     try {
-      // Simulate a network request for login (replace with actual API call)
-      await Future.delayed(Duration(seconds: 2)); // Simulating network delay
+      final response = await http.post(
+        Uri.parse('https://yourbackendapi.com/login'), // Replace with your backend API URL
+        body: json.encode({
+          'email': email,
+          'password': password,
+          'role': role,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-      // Example authentication logic with role
-      if (email == 'farmer@example.com' && password == 'password123' && role == 'farmer') {
-        _isAuthenticated = true;
-        _role = 'farmer'; // Assign the role after login
-        notifyListeners();
-        return true;
-      } else if (email == 'admin@example.com' && password == 'password123' && role == 'admin') {
-        _isAuthenticated = true;
-        _role = 'admin'; // Assign the role after login
-        notifyListeners();
-        return true;
-      } else {
-        return false;
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          _isAuthenticated = true;
+          _role = role;
+          notifyListeners();
+          return true;
+        }
       }
+      return false;
     } catch (e) {
       print('Error during login: $e');
       return false;
@@ -34,18 +39,26 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> register(String email, String password, String role) async {
     try {
-      // Simulate a network request for registration (replace with actual API call)
-      await Future.delayed(Duration(seconds: 2)); // Simulating network delay
+      final response = await http.post(
+        Uri.parse('https://yourbackendapi.com/register'), // Replace with your backend API URL
+        body: json.encode({
+          'email': email,
+          'password': password,
+          'role': role,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-      // Example registration logic (mocked)
-      if (email.isNotEmpty && password.length > 5) {
-        _isAuthenticated = true; // Assume registration is successful
-        _role = role; // Assign the role during registration
-        notifyListeners();
-        return true;
-      } else {
-        return false;
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          _isAuthenticated = true;
+          _role = role;
+          notifyListeners();
+          return true;
+        }
       }
+      return false;
     } catch (e) {
       print('Error during registration: $e');
       return false;
@@ -54,7 +67,7 @@ class AuthProvider with ChangeNotifier {
 
   void logout() {
     _isAuthenticated = false;
-    _role = ''; // Clear the role during logout
+    _role = '';
     notifyListeners();
   }
 }

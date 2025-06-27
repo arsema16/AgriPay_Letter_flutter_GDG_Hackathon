@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/farmer_provider.dart'; // Make sure this path is correct
+void main() {
+  runApp(const FarmerHomeScreen());
+}
 
 class FarmerHomeScreen extends StatelessWidget {
   const FarmerHomeScreen({super.key});
@@ -67,7 +70,7 @@ class FarmerHomeScreen extends StatelessWidget {
                       icon: const Icon(Icons.notifications, color: Colors.red),
                       tooltip: 'Notifications',
                       onPressed: () {
-                        Navigator.pushNamed(context, '/notifications');
+                        Navigator.pushNamed(context, '/notification');
                       },
                     ),
                     IconButton(
@@ -86,6 +89,14 @@ class FarmerHomeScreen extends StatelessWidget {
                   spacing: 16,
                   runSpacing: 16,
                   children: [
+                    DashboardCard(
+                      title: "Loan Request",
+                      icon: Icons.account_balance,
+                      color: Colors.amber,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/loan-request');
+                      },
+                    ),
                     DashboardCard(
                       title: "Loan Status",
                       icon: Icons.monetization_on,
@@ -108,6 +119,14 @@ class FarmerHomeScreen extends StatelessWidget {
                       color: Colors.brown,
                       onTap: () {
                         Navigator.pushNamed(context, '/harvest-log');
+                      },
+                    ),
+                    DashboardCard(
+                      title: "Yield History",
+                      icon: Icons.bar_chart,
+                      color: Colors.green,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/yield');
                       },
                     ),
                     DashboardCard(
